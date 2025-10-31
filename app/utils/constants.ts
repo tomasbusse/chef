@@ -46,6 +46,7 @@ export type ModelSelection =
   | 'openrouter-mistralai/mistral-medium-3.1'
   | 'openrouter-mistralai/codestral-2508'
   | 'openrouter-nvidia/llama-3.3-nemotron-super-49b-v1.5'
+  | 'openrouter-minimax/minimax-m2'
   | 'minimax-abab6.5'
   | 'minimax-abab6';
 

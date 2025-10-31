@@ -213,6 +213,11 @@ export const models: Partial<
     provider: 'openrouter',
     requireKey: true,
   },
+  'openrouter-minimax/minimax-m2': {
+    name: 'MiniMax M2',
+    provider: 'openrouter',
+    requireKey: true,
+  },
   'minimax-abab6.5': {
     name: 'abab6.5',
     provider: 'minimax',
