@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { toast } from 'sonner';
-import { useConvexAuth } from 'convex/react';
+import { useConvex } from 'convex/react';
+import { getConvexAuthToken } from '~/lib/stores/sessionId';
 
 interface GitHubExportDialogProps {
   open: boolean;
@@ -10,7 +11,7 @@ interface GitHubExportDialogProps {
 }
 
 export function GitHubExportDialog({ open, onOpenChange, files }: GitHubExportDialogProps) {
-  const { isAuthenticated } = useConvexAuth();
+  const convex = useConvex();
   const [isExporting, setIsExporting] = useState(false);
   const [repoName, setRepoName] = useState('');
   const [repoDescription, setRepoDescription] = useState('');
@@ -20,7 +21,10 @@ export function GitHubExportDialog({ open, onOpenChange, files }: GitHubExportDi
   const [githubUsername, setGithubUsername] = useState('');
 
   const handleExport = async () => {
-    if (!isAuthenticated) {
+    // Get Convex authentication token
+    const convexAuthToken = getConvexAuthToken(convex);
+    
+    if (!convexAuthToken) {
       toast.error('You must be logged in to export to GitHub');
       return;
     }
@@ -63,7 +67,7 @@ export function GitHubExportDialog({ open, onOpenChange, files }: GitHubExportDi
           commitMessage,
           githubToken,
           githubUsername,
-          token: localStorage.getItem('convex-token'),
+          token: convexAuthToken,
         }),
       });
 
