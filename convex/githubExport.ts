@@ -106,8 +106,17 @@ export const exportToGitHub = action({
           }
 
           const blobData = await blobResponse.json();
+          
+          // Normalize the file path - remove /home/project/ prefix and leading slashes
+          let normalizedPath = file.path;
+          if (normalizedPath.startsWith('/home/project/')) {
+            normalizedPath = normalizedPath.substring('/home/project/'.length);
+          } else if (normalizedPath.startsWith('/')) {
+            normalizedPath = normalizedPath.substring(1);
+          }
+          
           return {
-            path: file.path,
+            path: normalizedPath,
             mode: '100644', // Regular file
             type: 'blob' as const,
             sha: blobData.sha,
