@@ -158,33 +158,58 @@ export const models: Partial<
     provider: 'openrouter',
     requireKey: true,
   },
-  'openrouter-anthropic/claude-3.5-sonnet': {
-    name: 'Claude 3.5 Sonnet',
+  'openrouter-openai/gpt-5': {
+    name: 'GPT-5',
     provider: 'openrouter',
     requireKey: true,
   },
-  'openrouter-openai/gpt-4o': {
-    name: 'GPT-4o',
+  'openrouter-openai/gpt-5-pro': {
+    name: 'GPT-5 Pro',
     provider: 'openrouter',
     requireKey: true,
   },
-  'openrouter-openai/gpt-4-turbo': {
-    name: 'GPT-4 Turbo',
+  'openrouter-openai/gpt-5-mini': {
+    name: 'GPT-5 Mini',
     provider: 'openrouter',
     requireKey: true,
   },
-  'openrouter-google/gemini-pro-1.5': {
-    name: 'Gemini Pro 1.5',
+  'openrouter-anthropic/claude-opus-4.1': {
+    name: 'Claude Opus 4.1',
     provider: 'openrouter',
     requireKey: true,
   },
-  'openrouter-meta-llama/llama-3.1-405b-instruct': {
-    name: 'Llama 3.1 405B',
+  'openrouter-anthropic/claude-sonnet-4.5': {
+    name: 'Claude Sonnet 4.5',
     provider: 'openrouter',
     requireKey: true,
   },
-  'openrouter-mistralai/mistral-large': {
-    name: 'Mistral Large',
+  'openrouter-anthropic/claude-haiku-4.5': {
+    name: 'Claude Haiku 4.5',
+    provider: 'openrouter',
+    requireKey: true,
+  },
+  'openrouter-google/gemini-2.5-flash-preview-09-2025': {
+    name: 'Gemini 2.5 Flash Preview',
+    provider: 'openrouter',
+    requireKey: true,
+  },
+  'openrouter-google/gemini-2.5-flash-lite': {
+    name: 'Gemini 2.5 Flash Lite',
+    provider: 'openrouter',
+    requireKey: true,
+  },
+  'openrouter-mistralai/mistral-medium-3.1': {
+    name: 'Mistral Medium 3.1',
+    provider: 'openrouter',
+    requireKey: true,
+  },
+  'openrouter-mistralai/codestral-2508': {
+    name: 'Codestral 2508',
+    provider: 'openrouter',
+    requireKey: true,
+  },
+  'openrouter-nvidia/llama-3.3-nemotron-super-49b-v1.5': {
+    name: 'Llama 3.3 Nemotron 49B',
     provider: 'openrouter',
     requireKey: true,
   },
