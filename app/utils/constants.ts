@@ -33,6 +33,11 @@ export type ModelSelection =
   | 'gpt-4.1-mini'
   | 'gpt-5'
   | 'grok-3-mini'
-  | 'gemini-2.5-pro';
+  | 'gemini-2.5-pro'
+  | 'openrouter-auto'
+  | 'openrouter-claude-3.5-sonnet'
+  | 'openrouter-gpt-4-turbo'
+  | 'minimax-abab6.5'
+  | 'minimax-abab6';
 
 export const MAX_CONSECUTIVE_DEPLOY_ERRORS = 5;

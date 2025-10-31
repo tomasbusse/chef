@@ -10,7 +10,7 @@ import type { Doc } from '@convex/_generated/dataModel';
 import { captureMessage } from '@sentry/remix';
 import { useLaunchDarkly } from '~/lib/hooks/useLaunchDarkly';
 
-export type ModelProvider = 'openai' | 'google' | 'xai' | 'anthropic' | 'auto';
+export type ModelProvider = 'openai' | 'google' | 'xai' | 'anthropic' | 'auto' | 'openrouter' | 'minimax';
 
 export function displayModelProviderName(provider: ModelProvider) {
   switch (provider) {
@@ -24,6 +24,10 @@ export function displayModelProviderName(provider: ModelProvider) {
       return 'Anthropic';
     case 'auto':
       return 'Anthropic';
+    case 'openrouter':
+      return 'OpenRouter';
+    case 'minimax':
+      return 'MiniMax';
     default: {
       const exhaustiveCheck: never = provider;
       throw new Error(`Unknown model provider: ${exhaustiveCheck}`);
@@ -56,6 +60,40 @@ const providerToIcon: Record<string, React.ReactNode> = {
         d="M325.226 695.251C206.128 580.84 226.662 403.776 328.285 301.668C403.431 226.097 526.549 195.254 634.026 240.596L749.454 186.994C728.657 171.88 702.007 155.623 671.424 144.2C533.19 86.9942 367.693 115.465 255.323 228.382C147.234 337.081 113.244 504.215 171.613 646.833C215.216 753.423 143.739 828.818 71.7385 904.916C46.2237 931.893 20.6216 958.87 0 987.429L325.139 695.339"
         fill="currentColor"
       />
+    </svg>
+  ),
+  openrouter: (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path
+        d="M12 2L2 7L12 12L22 7L12 2Z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+      />
+      <path
+        d="M2 17L12 22L22 17"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M2 12L12 17L22 12"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  ),
+  minimax: (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="3" y="3" width="8" height="8" rx="1" fill="currentColor" opacity="0.6" />
+      <rect x="13" y="3" width="8" height="8" rx="1" fill="currentColor" />
+      <rect x="3" y="13" width="8" height="8" rx="1" fill="currentColor" />
+      <rect x="13" y="13" width="8" height="8" rx="1" fill="currentColor" opacity="0.6" />
     </svg>
   ),
 };
@@ -113,6 +151,31 @@ export const models: Partial<
   'gpt-4.1-mini': {
     name: 'GPT-4.1 Mini',
     provider: 'openai',
+    requireKey: true,
+  },
+  'openrouter-auto': {
+    name: 'Auto (Best Available)',
+    provider: 'openrouter',
+    requireKey: true,
+  },
+  'openrouter-claude-3.5-sonnet': {
+    name: 'Claude 3.5 Sonnet',
+    provider: 'openrouter',
+    requireKey: true,
+  },
+  'openrouter-gpt-4-turbo': {
+    name: 'GPT-4 Turbo',
+    provider: 'openrouter',
+    requireKey: true,
+  },
+  'minimax-abab6.5': {
+    name: 'abab6.5',
+    provider: 'minimax',
+    requireKey: true,
+  },
+  'minimax-abab6': {
+    name: 'abab6',
+    provider: 'minimax',
     requireKey: true,
   },
 } as const;

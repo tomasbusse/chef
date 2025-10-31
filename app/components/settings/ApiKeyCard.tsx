@@ -61,6 +61,18 @@ export function ApiKeyCard() {
     });
   };
 
+  const validateOpenRouterApiKey = async (apiKey: string) => {
+    return await convex.action(api.apiKeys.validateOpenRouterApiKey, {
+      apiKey,
+    });
+  };
+
+  const validateMinimaxApiKey = async (apiKey: string) => {
+    return await convex.action(api.apiKeys.validateMinimaxApiKey, {
+      apiKey,
+    });
+  };
+
   return (
     <div className="rounded-lg border bg-bolt-elements-background-depth-1 shadow-sm">
       <div className="p-6">
@@ -150,13 +162,49 @@ export function ApiKeyCard() {
             value={apiKey?.xai || ''}
             onValidate={validateXaiApiKey}
           />
+
+          <ApiKeyItem
+            label="OpenRouter API key"
+            description={
+              <a
+                href="https://openrouter.ai/keys"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-content-link hover:underline"
+              >
+                See instructions for generating an OpenRouter API key
+              </a>
+            }
+            isLoading={apiKey === undefined}
+            keyType="openrouter"
+            value={apiKey?.openrouter || ''}
+            onValidate={validateOpenRouterApiKey}
+          />
+
+          <ApiKeyItem
+            label="MiniMax API key"
+            description={
+              <a
+                href="https://www.minimaxi.com/document"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-content-link hover:underline"
+              >
+                See instructions for generating a MiniMax API key
+              </a>
+            }
+            isLoading={apiKey === undefined}
+            keyType="minimax"
+            value={apiKey?.minimax || ''}
+            onValidate={validateMinimaxApiKey}
+          />
         </div>
       </div>
     </div>
   );
 }
 
-type KeyType = 'anthropic' | 'google' | 'openai' | 'xai';
+type KeyType = 'anthropic' | 'google' | 'openai' | 'xai' | 'openrouter' | 'minimax';
 
 function ApiKeyItem({
   label,
@@ -241,6 +289,14 @@ function ApiKeyItem({
           await convex.mutation(api.apiKeys.deleteXaiApiKeyForCurrentMember);
           toast.success('xAI API key removed', { id: 'xai-removed' });
           break;
+        case 'openrouter':
+          await convex.mutation(api.apiKeys.deleteOpenRouterApiKeyForCurrentMember);
+          toast.success('OpenRouter API key removed', { id: 'openrouter-removed' });
+          break;
+        case 'minimax':
+          await convex.mutation(api.apiKeys.deleteMinimaxApiKeyForCurrentMember);
+          toast.success('MiniMax API key removed', { id: 'minimax-removed' });
+          break;
       }
     } catch (error) {
       captureException(error);
@@ -265,6 +321,8 @@ function ApiKeyItem({
         openai: apiKey?.openai || undefined,
         xai: apiKey?.xai || undefined,
         google: apiKey?.google || undefined,
+        openrouter: apiKey?.openrouter || undefined,
+        minimax: apiKey?.minimax || undefined,
       };
 
       switch (keyType) {
@@ -279,6 +337,12 @@ function ApiKeyItem({
           break;
         case 'xai':
           apiKeyMutation.xai = cleanApiKey(newKeyValue);
+          break;
+        case 'openrouter':
+          apiKeyMutation.openrouter = cleanApiKey(newKeyValue);
+          break;
+        case 'minimax':
+          apiKeyMutation.minimax = cleanApiKey(newKeyValue);
           break;
       }
 
