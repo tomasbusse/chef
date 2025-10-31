@@ -3,7 +3,7 @@ import { httpAction, type ActionCtx } from "./_generated/server";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { ConvexError } from "convex/values";
-import { openaiProxy } from "./openaiProxy";
+import { modelProxy } from "./modelProxy";
 import { corsRouter } from "convex-helpers/server/cors";
 import { resendProxy } from "./resendProxy";
 
@@ -65,9 +65,9 @@ httpWithCors.route({
 });
 
 http.route({
-  pathPrefix: "/openai-proxy/",
+  pathPrefix: "/model-proxy/",
   method: "POST",
-  handler: openaiProxy,
+  handler: modelProxy,
 });
 
 http.route({

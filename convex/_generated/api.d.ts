@@ -22,6 +22,7 @@ import type * as lz4 from "../lz4.js";
 import type * as lz4Wasm from "../lz4Wasm.js";
 import type * as messages from "../messages.js";
 import type * as migrations from "../migrations.js";
+import type * as modelProxy from "../modelProxy.js";
 import type * as openaiProxy from "../openaiProxy.js";
 import type * as rateLimiter from "../rateLimiter.js";
 import type * as resendProxy from "../resendProxy.js";
@@ -61,6 +62,7 @@ declare const fullApi: ApiFromModules<{
   lz4Wasm: typeof lz4Wasm;
   messages: typeof messages;
   migrations: typeof migrations;
+  modelProxy: typeof modelProxy;
   openaiProxy: typeof openaiProxy;
   rateLimiter: typeof rateLimiter;
   resendProxy: typeof resendProxy;

@@ -296,7 +296,7 @@ export const Chat = memo(
 
     const { messages, status, stop, append, setMessages, reload, error } = useChat({
       initialMessages,
-      api: '/api/chat',
+      api: '/model-proxy/',
       sendExtraMessageFields: true,
       experimental_prepareRequestBody: ({ messages }) => {
         const chatInitialId = initialIdStore.get();
