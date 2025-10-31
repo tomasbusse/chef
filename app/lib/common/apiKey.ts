@@ -10,6 +10,16 @@ export function hasApiKeySet(
     return false;
   }
 
+  // Handle OpenRouter models
+  if (modelSelection.startsWith('openrouter-')) {
+    return !!apiKey.openrouter?.trim();
+  }
+
+  // Handle MiniMax models
+  if (modelSelection.startsWith('minimax-')) {
+    return !!apiKey.minimax?.trim();
+  }
+
   switch (modelSelection) {
     case 'auto':
       if (useGeminiAuto) {
@@ -28,10 +38,8 @@ export function hasApiKeySet(
       return !!apiKey.xai?.trim();
     case 'gemini-2.5-pro':
       return !!apiKey.google?.trim();
-    default: {
-      const _exhaustiveCheck: never = modelSelection;
+    default:
       return false;
-    }
   }
 }
 

@@ -193,28 +193,44 @@ export const Chat = memo(
           return { hasMissingKey: false, requireKey: false };
         }
 
-        // Map models to their respective providers
-        const MODEL_TO_PROVIDER_MAP: {
-          [K in ModelSelection]: { providerName: ModelProvider; apiKeyField: 'value' | 'openai' | 'xai' | 'google' };
-        } = {
-          auto: { providerName: 'anthropic', apiKeyField: 'value' },
-          'claude-4-sonnet': { providerName: 'anthropic', apiKeyField: 'value' },
-          'claude-4.5-sonnet': { providerName: 'anthropic', apiKeyField: 'value' },
-          'gpt-4.1': { providerName: 'openai', apiKeyField: 'openai' },
-          'gpt-5': { providerName: 'openai', apiKeyField: 'openai' },
-          'grok-3-mini': { providerName: 'xai', apiKeyField: 'xai' },
-          'gemini-2.5-pro': { providerName: 'google', apiKeyField: 'google' },
-          'claude-3-5-haiku': { providerName: 'anthropic', apiKeyField: 'value' },
-          'gpt-4.1-mini': { providerName: 'openai', apiKeyField: 'openai' },
-        };
+        // Determine provider and API key field based on model
+        let providerName: ModelProvider;
+        let apiKeyField: 'value' | 'openai' | 'xai' | 'google' | 'openrouter' | 'minimax';
 
-        // Get provider info for the current model
-        const providerInfo = MODEL_TO_PROVIDER_MAP[model];
+        if (model.startsWith('openrouter-')) {
+          providerName = 'openrouter';
+          apiKeyField = 'openrouter';
+        } else if (model.startsWith('minimax-')) {
+          providerName = 'minimax';
+          apiKeyField = 'minimax';
+        } else {
+          // Map models to their respective providers
+          const MODEL_TO_PROVIDER_MAP: Partial<{
+            [K in ModelSelection]: { providerName: ModelProvider; apiKeyField: 'value' | 'openai' | 'xai' | 'google' };
+          }> = {
+            auto: { providerName: 'anthropic', apiKeyField: 'value' },
+            'claude-4-sonnet': { providerName: 'anthropic', apiKeyField: 'value' },
+            'claude-4.5-sonnet': { providerName: 'anthropic', apiKeyField: 'value' },
+            'gpt-4.1': { providerName: 'openai', apiKeyField: 'openai' },
+            'gpt-5': { providerName: 'openai', apiKeyField: 'openai' },
+            'grok-3-mini': { providerName: 'xai', apiKeyField: 'xai' },
+            'gemini-2.5-pro': { providerName: 'google', apiKeyField: 'google' },
+            'claude-3-5-haiku': { providerName: 'anthropic', apiKeyField: 'value' },
+            'gpt-4.1-mini': { providerName: 'openai', apiKeyField: 'openai' },
+          };
+
+          const providerInfo = MODEL_TO_PROVIDER_MAP[model];
+          if (!providerInfo) {
+            return { hasMissingKey: false, requireKey: false };
+          }
+          providerName = providerInfo.providerName;
+          apiKeyField = providerInfo.apiKeyField;
+        }
 
         // Check if the API key for this provider is missing
-        const keyValue = apiKey?.[providerInfo.apiKeyField];
+        const keyValue = apiKey?.[apiKeyField];
         if (!keyValue || keyValue.trim() === '') {
-          return { hasMissingKey: true, provider: providerInfo.providerName, requireKey };
+          return { hasMissingKey: true, provider: providerName, requireKey };
         }
 
         return { hasMissingKey: false, requireKey };
@@ -322,9 +338,20 @@ export const Chat = memo(
         } else if (modelSelection === 'gpt-5') {
           modelProvider = 'OpenAI';
           modelChoice = 'gpt-5';
+        } else if (modelSelection.startsWith('openrouter-')) {
+          modelProvider = 'OpenRouter';
+          // Extract the model ID after 'openrouter-'
+          if (modelSelection === 'openrouter-auto') {
+            modelChoice = 'auto';
+          } else {
+            modelChoice = modelSelection.replace('openrouter-', '');
+          }
+        } else if (modelSelection.startsWith('minimax-')) {
+          modelProvider = 'MiniMax';
+          // Extract the model ID after 'minimax-'
+          modelChoice = modelSelection.replace('minimax-', '');
         } else {
-          const _exhaustiveCheck: never = modelSelection;
-          throw new Error(`Unknown model: ${_exhaustiveCheck}`);
+          throw new Error(`Unknown model: ${modelSelection}`);
         }
         let shouldDisableTools = false;
         if (messages.length > 0 && messages[messages.length - 1].role === 'assistant') {
