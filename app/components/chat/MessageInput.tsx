@@ -37,9 +37,11 @@ import { Menu as MenuComponent, MenuItem as MenuItemComponent } from '@ui/Menu';
 import { PencilSquareIcon } from '@heroicons/react/24/outline';
 import { ChatBubbleLeftIcon, DocumentArrowUpIcon, InformationCircleIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '@workos-inc/authkit-react';
+import { CodeBracketIcon, PhotoIcon } from '@heroicons/react/24/outline';
+import * as Dialog from '@radix-ui/react-dialog';
 import { useConvex } from 'convex/react';
 
-const PROMPT_LENGTH_WARNING_THRESHOLD = 2000;
+const PROMPT_LENGTH_WARNING_THRESHOLD = 10000;
 
 type Highlight = {
   text: string; // must be lowercase
@@ -112,6 +114,12 @@ export const MessageInput = memo(function MessageInput({
   numMessages: number | undefined;
 }) {
   const [isEnhancing, setIsEnhancing] = useState(false);
+  const [isGitHubDialogOpen, setIsGitHubDialogOpen] = useState(false);
+  const [githubUrl, setGithubUrl] = useState('');
+  const [isImporting, setIsImporting] = useState(false);
+  const [isDesignDialogOpen, setIsDesignDialogOpen] = useState(false);
+  const [isUploadingDesign, setIsUploadingDesign] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const sessionId = useConvexSessionIdOrNullOrLoading();
   const chefAuthState = useChefAuth();
   const selectedTeamSlug = useSelectedTeamSlug();
@@ -250,28 +258,178 @@ export const MessageInput = memo(function MessageInput({
     [input],
   );
 
+  // GitHub import handler
+  const handleGitHubImport = useCallback(async () => {
+    if (!githubUrl.trim()) {
+      toast.error('Please enter a GitHub URL');
+      return;
+    }
+
+    try {
+      setIsImporting(true);
+
+      const token = getConvexAuthToken(convex);
+      if (!token) {
+        throw new Error('No authentication token available');
+      }
+
+      const response = await fetch('/api/import-github', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          githubUrl: githubUrl.trim(),
+          token,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to import repository');
+      }
+
+      // Create file manifest reference
+      const filesList = data.manifest
+        .map((file: { path: string; storageId: string }) => `  - ${file.path}`)
+        .join('\n');
+
+      // Create enhanced prompt with design preservation instructions
+      const enhancedPrompt = `I want to recreate this app from the GitHub repository: ${githubUrl}
+
+## Repository Information
+- Owner/Repo: ${data.repository.owner}/${data.repository.repo}
+- Branch: ${data.repository.branch}
+- Files imported: ${data.fileCount}
+- Total size: ${(data.totalSize / 1024).toFixed(2)} KB
+
+## Uploaded Files
+The following files have been uploaded to Convex storage and are available for analysis:
+${filesList}
+
+## Task Requirements
+
+### 1. Code Analysis & Recreation
+- Analyze all uploaded files to understand the application architecture and features
+- Identify the data models, UI components, and business logic
+- Recreate the application with a Convex backend
+
+### 2. Backend Implementation
+- Create appropriate Convex tables for all data models
+- Implement Convex queries, mutations, and actions for all features
+- Use Convex's built-in features (auth, file storage, search) where applicable
+- Ensure real-time updates using Convex subscriptions
+
+### 3. Design Preservation (CRITICAL)
+**IMPORTANT: Maintain the EXACT visual design, layout, and styling from the original application.**
+
+#### Design Fidelity Requirements:
+- **Colors**: Extract and use the EXACT color palette from the original app
+  - Preserve primary, secondary, accent, text, and background colors
+  - Maintain color relationships and contrast ratios
+  - Keep the same color scheme for interactive states (hover, active, disabled)
+
+- **Typography**: Match the original fonts and text styling
+  - Font families, sizes, weights, and line heights
+  - Text alignment and spacing
+  - Heading hierarchy and styles
+
+- **Layout & Spacing**: Replicate the exact layout structure
+  - Container widths, padding, and margins
+  - Grid systems and flex layouts
+  - Responsive breakpoints and behavior
+  - Component spacing and alignment
+
+- **UI Components**: Recreate all components with identical appearance
+  - Buttons, inputs, cards, modals, dropdowns, etc.
+  - Border radius, shadows, and borders
+  - Icons and their styling
+  - Loading states and animations
+
+- **Visual Effects**: Preserve all visual details
+  - Shadows and elevation
+  - Transitions and animations
+  - Hover and focus states
+  - Background patterns or gradients
+
+#### Format Conversion Guidelines:
+If the original app uses different styling approaches, convert them while preserving the design:
+
+**CSS Modules → Tailwind CSS:**
+- Extract exact values from CSS (colors, spacing, sizes)
+- Map CSS properties to equivalent Tailwind utilities
+- Use arbitrary values \`[#hexcode]\` or \`[Xpx]\` for exact matches
+- Preserve responsive behavior with Tailwind breakpoints
+
+**Styled Components → Tailwind CSS:**
+- Convert theme variables to Tailwind config or CSS variables
+- Transform dynamic styles to conditional Tailwind classes
+- Maintain all computed values and expressions
+
+**Other CSS → Tailwind CSS:**
+- Analyze computed styles for exact values
+- Use Tailwind's \`@apply\` directive for complex patterns if needed
+- Define custom CSS variables in your styles for non-Tailwind values
+
+**Key Conversion Rules:**
+1. NEVER approximate - use exact pixel values, hex codes, and measurements
+2. If Tailwind doesn't have a utility, use arbitrary values: \`w-[347px]\`, \`bg-[#F8F7F4]\`
+3. For complex gradients or effects, use inline styles or CSS variables
+4. Test responsive behavior matches original at all breakpoints
+
+### 4. Feature Completeness
+- Implement ALL features from the original application
+- Ensure all user interactions work identically
+- Maintain the same navigation and routing structure
+- Preserve any animations or transitions
+
+### 5. Code Quality
+- Write clean, maintainable TypeScript/React code
+- Follow Convex best practices for data modeling
+- Add appropriate error handling and loading states
+- Ensure type safety throughout
+
+**Remember: The recreated app should be visually INDISTINGUISHABLE from the original. When in doubt, inspect the original files for exact values rather than approximating.**
+
+Please begin by analyzing the uploaded files and then recreate the application following these requirements.`;
+
+      messageInputStore.set(enhancedPrompt);
+
+      toast.success(`Successfully imported ${data.fileCount} files from GitHub!`);
+      setIsGitHubDialogOpen(false);
+      setGithubUrl('');
+    } catch (error) {
+      console.error('Error importing from GitHub:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to import repository');
+    } finally {
+      setIsImporting(false);
+    }
+  }, [githubUrl, convex]);
+
   return (
-    <div className="relative z-20 mx-auto w-full max-w-chat rounded-xl shadow transition-all duration-200">
-      <div className="rounded-xl bg-background-primary/75 backdrop-blur-md">
-        <div className="rounded-t-xl border transition-all has-[textarea:focus]:border-border-selected">
-          <TextareaWithHighlights
-            onKeyDown={handleKeyDown}
-            onChange={handleChange}
-            value={input}
-            chatStarted={chatStarted}
-            minHeight={100}
-            maxHeight={chatStarted ? 400 : 200}
-            placeholder={
-              chatStarted
-                ? numMessages !== undefined && numMessages > 0
-                  ? 'Request changes by sending another message…'
-                  : 'Send a prompt for a new feature…'
-                : 'What app do you want to serve?'
-            }
-            disabled={disabled}
-            highlights={HIGHLIGHTS}
-          />
-        </div>
+    <>
+      <div className="relative z-20 mx-auto w-full max-w-chat rounded-xl shadow transition-all duration-200">
+        <div className="rounded-xl bg-background-primary/75 backdrop-blur-md">
+          <div className="rounded-t-xl border transition-all has-[textarea:focus]:border-border-selected">
+            <TextareaWithHighlights
+              onKeyDown={handleKeyDown}
+              onChange={handleChange}
+              value={input}
+              chatStarted={chatStarted}
+              minHeight={100}
+              maxHeight={chatStarted ? 400 : 200}
+              placeholder={
+                chatStarted
+                  ? numMessages !== undefined && numMessages > 0
+                    ? 'Request changes by sending another message…'
+                    : 'Send a prompt for a new feature…'
+                  : 'What app do you want to serve?'
+              }
+              disabled={disabled}
+              highlights={HIGHLIGHTS}
+            />
+          </div>
         <div
           className={classNames(
             'flex items-center gap-2 border rounded-b-xl border-t-0 bg-background-secondary/80 p-1.5 text-sm flex-wrap',
@@ -341,6 +499,26 @@ export const MessageInput = memo(function MessageInput({
                 </MenuItemComponent>
               </MenuComponent>
             )}
+            {chefAuthState.kind === 'fullyLoggedIn' && !chatStarted && (
+              <>
+                <Button
+                  variant="neutral"
+                  tip="Upload Design Files"
+                  inline
+                  onClick={() => setIsDesignDialogOpen(true)}
+                  size="xs"
+                  icon={<PhotoIcon className="size-4" />}
+                />
+                <Button
+                  variant="neutral"
+                  tip="Load from GitHub"
+                  inline
+                  onClick={() => setIsGitHubDialogOpen(true)}
+                  size="xs"
+                  icon={<CodeBracketIcon className="size-4" />}
+                />
+              </>
+            )}
             {chefAuthState.kind === 'fullyLoggedIn' && (
               <EnhancePromptButton
                 isEnhancing={isEnhancing}
@@ -381,6 +559,256 @@ export const MessageInput = memo(function MessageInput({
         </div>
       </div>
     </div>
+
+      {/* Design Upload Dialog */}
+      <Dialog.Root open={isDesignDialogOpen} onOpenChange={setIsDesignDialogOpen}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 bg-black/50 z-50" />
+          <Dialog.Content className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-background-primary border border-border-primary rounded-lg shadow-lg p-6 w-full max-w-md z-50">
+            <Dialog.Title className="text-lg font-semibold mb-4">Upload Design Files</Dialog.Title>
+            <Dialog.Description className="text-sm text-content-secondary mb-4">
+              Upload design mockups, screenshots, Figma exports, or product requirement PDFs. Gemini Vision will analyze them to extract exact specifications.
+            </Dialog.Description>
+            
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="design-files" className="block text-sm font-medium mb-2">
+                  Select Files
+                </label>
+                <input
+                  id="design-files"
+                  type="file"
+                  multiple
+                  accept="image/png,image/jpeg,image/jpg,image/webp,image/svg+xml,application/pdf"
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files || []);
+                    setSelectedFiles(files);
+                  }}
+                  className="w-full px-3 py-2 border border-border-primary rounded-md bg-background-secondary text-content-primary file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                  disabled={isUploadingDesign}
+                />
+                <p className="mt-2 text-xs text-content-tertiary">
+                  Supported: PNG, JPG, WEBP, SVG, PDF (max 10 files)
+                </p>
+              </div>
+
+              {selectedFiles.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">Selected Files ({selectedFiles.length}):</p>
+                  <div className="max-h-32 overflow-y-auto space-y-1">
+                    {selectedFiles.map((file, index) => (
+                      <div key={index} className="text-xs text-content-secondary flex items-center gap-2">
+                        <PhotoIcon className="size-3" />
+                        <span className="flex-1 truncate">{file.name}</span>
+                        <span className="text-content-tertiary">
+                          {(file.size / 1024).toFixed(1)} KB
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="neutral"
+                  onClick={() => {
+                    setIsDesignDialogOpen(false);
+                    setSelectedFiles([]);
+                  }}
+                  disabled={isUploadingDesign}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={async () => {
+                    if (selectedFiles.length === 0) {
+                      toast.error('Please select at least one file');
+                      return;
+                    }
+
+                    try {
+                      setIsUploadingDesign(true);
+
+                      const token = getConvexAuthToken(convex);
+                      if (!token) {
+                        throw new Error('No authentication token available');
+                      }
+
+                      // Convert files to base64
+                      const filePromises = selectedFiles.slice(0, 10).map((file) => {
+                        return new Promise<{ name: string; type: string; base64Data: string }>((resolve, reject) => {
+                          const reader = new FileReader();
+                          reader.onload = () => {
+                            resolve({
+                              name: file.name,
+                              type: file.type,
+                              base64Data: reader.result as string,
+                            });
+                          };
+                          reader.onerror = reject;
+                          reader.readAsDataURL(file);
+                        });
+                      });
+
+                      const filesData = await Promise.all(filePromises);
+
+                      // Upload to Convex
+                      const uploadResponse = await fetch('/api/upload-design', {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ files: filesData, token }),
+                      });
+
+                      if (!uploadResponse.ok) {
+                        throw new Error('Failed to upload files');
+                      }
+
+                      const uploadData = await uploadResponse.json();
+
+                      // Analyze with Gemini Vision
+                      const analyzeResponse = await fetch('/api/analyze-design', {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                          storageIds: uploadData.manifest.map((m: { storageId: string }) => m.storageId),
+                          fileNames: uploadData.manifest.map((m: { name: string }) => m.name),
+                          token,
+                        }),
+                      });
+
+                      if (!analyzeResponse.ok) {
+                        throw new Error('Failed to analyze design files');
+                      }
+
+                      const analyzeData = await analyzeResponse.json();
+
+                      // Generate enhanced prompt
+                      const filesList = uploadData.manifest
+                        .map((file: { name: string }) => `  - ${file.name}`)
+                        .join('\n');
+
+                      const enhancedPrompt = `I want to recreate this design from uploaded files.
+
+## Uploaded Files (${uploadData.totalFiles} files, ${(uploadData.totalSize / 1024).toFixed(2)} KB)
+${filesList}
+
+## Gemini Vision Analysis
+
+${analyzeData.analysis}
+
+## Task Requirements
+
+Please recreate this design EXACTLY as shown in the uploaded files, following these guidelines:
+
+### 1. Design Fidelity (CRITICAL)
+- Use the EXACT colors, fonts, spacing, and layouts from the analysis above
+- Never approximate - use exact pixel values and hex codes
+- Match all visual effects (shadows, borders, gradients, animations)
+- Recreate all components with identical appearance
+
+### 2. Tailwind CSS Implementation
+- Use arbitrary values for exact matches: \`w-[347px]\`, \`bg-[#F8F7F4]\`
+- For complex effects, use inline styles or CSS variables
+- Preserve responsive behavior at all breakpoints
+
+### 3. Backend with Convex
+- Create appropriate Convex tables for data models
+- Implement real-time features using Convex subscriptions
+- Use Convex's built-in capabilities (auth, file storage, search) where needed
+
+### 4. Code Quality
+- Write clean, maintainable TypeScript/React code
+- Follow Convex best practices
+- Add proper error handling and loading states
+- Ensure type safety
+
+**Remember: The result should be visually INDISTINGUISHABLE from the uploaded design files.**
+
+Please begin by analyzing the specifications above and then recreate the design.`;
+
+                      messageInputStore.set(enhancedPrompt);
+
+                      toast.success(`Successfully analyzed ${uploadData.totalFiles} design files!`);
+                      setIsDesignDialogOpen(false);
+                      setSelectedFiles([]);
+                    } catch (error) {
+                      console.error('Error uploading design files:', error);
+                      toast.error(error instanceof Error ? error.message : 'Failed to upload design files');
+                    } finally {
+                      setIsUploadingDesign(false);
+                    }
+                  }}
+                  disabled={isUploadingDesign || selectedFiles.length === 0}
+                  icon={isUploadingDesign ? <Spinner className="size-4" /> : undefined}
+                >
+                  {isUploadingDesign ? 'Analyzing...' : 'Upload & Analyze'}
+                </Button>
+              </div>
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
+
+      {/* GitHub Import Dialog */}
+      <Dialog.Root open={isGitHubDialogOpen} onOpenChange={setIsGitHubDialogOpen}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 bg-black/50 z-50" />
+          <Dialog.Content className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-background-primary border border-border-primary rounded-lg shadow-lg p-6 w-full max-w-md z-50">
+            <Dialog.Title className="text-lg font-semibold mb-4">Load from GitHub</Dialog.Title>
+            <Dialog.Description className="text-sm text-content-secondary mb-4">
+              Enter a GitHub repository URL to import code. Chef will analyze the code structure and create appropriate Convex tables.
+            </Dialog.Description>
+            
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="github-url" className="block text-sm font-medium mb-2">
+                  GitHub Repository URL
+                </label>
+                <input
+                  id="github-url"
+                  type="text"
+                  value={githubUrl}
+                  onChange={(e) => setGithubUrl(e.target.value)}
+                  placeholder="https://github.com/username/repository"
+                  className="w-full px-3 py-2 border border-border-primary rounded-md bg-background-secondary text-content-primary placeholder-content-tertiary focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  disabled={isImporting}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !isImporting) {
+                      handleGitHubImport();
+                    }
+                  }}
+                />
+              </div>
+
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="neutral"
+                  onClick={() => {
+                    setIsGitHubDialogOpen(false);
+                    setGithubUrl('');
+                  }}
+                  disabled={isImporting}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleGitHubImport}
+                  disabled={isImporting || !githubUrl.trim()}
+                  icon={isImporting ? <Spinner className="size-4" /> : undefined}
+                >
+                  {isImporting ? 'Importing...' : 'Import'}
+                </Button>
+              </div>
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
+    </>
   );
 });
 
