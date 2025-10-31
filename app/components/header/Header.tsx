@@ -9,6 +9,7 @@ import { ShareButton } from './ShareButton';
 import { useConvexSessionIdOrNullOrLoading } from '~/lib/stores/sessionId';
 import { HamburgerMenuIcon, PersonIcon, GearIcon, ExitIcon } from '@radix-ui/react-icons';
 import { DownloadButton } from './DownloadButton';
+import { GitHubExportButton } from './GitHubExportButton';
 import { LoggedOutHeaderButtons } from './LoggedOutHeaderButtons';
 import { profileStore, setProfile } from '~/lib/stores/profile';
 import { Menu as MenuComponent, MenuItem as MenuItemComponent } from '@ui/Menu';
@@ -96,6 +97,7 @@ export function Header({ hideSidebarIcon = false }: { hideSidebarIcon?: boolean 
                   <PromptDebugButton />
                   {isPaidPlan === false && referralStats && referralStats.left > 0 && <ReferButton />}
                   <DownloadButton />
+                  <GitHubExportButton />
                   <ShareButton />
                   <DeployButton />
                   <div className="mr-1">
