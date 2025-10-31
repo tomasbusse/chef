@@ -291,7 +291,10 @@ export const MessageInput = memo(function MessageInput({
           <div className="ml-auto flex items-center gap-1">
             {chefAuthState.kind === 'unauthenticated' && <SignInButton />}
             {chefAuthState.kind === 'fullyLoggedIn' && (
-              <ModelSelector modelSelection={modelSelection} setModelSelection={setModelSelection} size="sm" />
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs font-medium text-content-secondary">Model:</span>
+                <ModelSelector modelSelection={modelSelection} setModelSelection={setModelSelection} size="sm" />
+              </div>
             )}
             {chefAuthState.kind === 'fullyLoggedIn' && (
               <MenuComponent
