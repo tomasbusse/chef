@@ -35,8 +35,12 @@ export type ModelSelection =
   | 'grok-3-mini'
   | 'gemini-2.5-pro'
   | 'openrouter-auto'
-  | 'openrouter-claude-3.5-sonnet'
-  | 'openrouter-gpt-4-turbo'
+  | 'openrouter-anthropic/claude-3.5-sonnet'
+  | 'openrouter-openai/gpt-4o'
+  | 'openrouter-openai/gpt-4-turbo'
+  | 'openrouter-google/gemini-pro-1.5'
+  | 'openrouter-meta-llama/llama-3.1-405b-instruct'
+  | 'openrouter-mistralai/mistral-large'
   | 'minimax-abab6.5'
   | 'minimax-abab6';
 

@@ -158,13 +158,33 @@ export const models: Partial<
     provider: 'openrouter',
     requireKey: true,
   },
-  'openrouter-claude-3.5-sonnet': {
+  'openrouter-anthropic/claude-3.5-sonnet': {
     name: 'Claude 3.5 Sonnet',
     provider: 'openrouter',
     requireKey: true,
   },
-  'openrouter-gpt-4-turbo': {
+  'openrouter-openai/gpt-4o': {
+    name: 'GPT-4o',
+    provider: 'openrouter',
+    requireKey: true,
+  },
+  'openrouter-openai/gpt-4-turbo': {
     name: 'GPT-4 Turbo',
+    provider: 'openrouter',
+    requireKey: true,
+  },
+  'openrouter-google/gemini-pro-1.5': {
+    name: 'Gemini Pro 1.5',
+    provider: 'openrouter',
+    requireKey: true,
+  },
+  'openrouter-meta-llama/llama-3.1-405b-instruct': {
+    name: 'Llama 3.1 405B',
+    provider: 'openrouter',
+    requireKey: true,
+  },
+  'openrouter-mistralai/mistral-large': {
+    name: 'Mistral Large',
     provider: 'openrouter',
     requireKey: true,
   },
