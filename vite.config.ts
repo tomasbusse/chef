@@ -93,6 +93,12 @@ export default defineConfig((config) => {
       host: '127.0.0.1',
       // feel free to disable, just using this to foolproof dev
       strictPort: true,
+      proxy: {
+        '/model-proxy': {
+          target: 'http://127.0.0.1:8787', // Assuming Convex runs on 8787
+          changeOrigin: true,
+        },
+      },
     },
     plugins: [
       // This is complicated: we're polyfilling the browser (!) for some things
