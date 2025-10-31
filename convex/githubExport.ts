@@ -125,6 +125,13 @@ export const exportToGitHub = action({
       );
 
       // Step 5: Create a new tree
+      const treePayload = {
+        base_tree: baseTreeSha,
+        tree: blobs,
+      };
+      
+      console.log('Creating tree with payload:', JSON.stringify(treePayload, null, 2));
+      
       const treeResponse = await fetch(`https://api.github.com/repos/${repoFullName}/git/trees`, {
         method: 'POST',
         headers: {
@@ -132,14 +139,18 @@ export const exportToGitHub = action({
           Accept: 'application/vnd.github.v3+json',
           'User-Agent': 'Chef-App',
         },
-        body: JSON.stringify({
-          base_tree: baseTreeSha,
-          tree: blobs,
-        }),
+        body: JSON.stringify(treePayload),
       });
 
       if (!treeResponse.ok) {
-        throw new Error('Failed to create tree');
+        const errorBody = await treeResponse.text();
+        console.error('GitHub tree creation failed:', {
+          status: treeResponse.status,
+          statusText: treeResponse.statusText,
+          body: errorBody,
+          payload: treePayload,
+        });
+        throw new Error(`Failed to create tree: ${treeResponse.status} ${treeResponse.statusText} - ${errorBody}`);
       }
 
       const treeData = await treeResponse.json();
